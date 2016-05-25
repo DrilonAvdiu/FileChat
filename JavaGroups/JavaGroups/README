@@ -1,0 +1,64 @@
+
+
+
+       JavaGroups - A Framework for Group Communication in Java
+       ========================================================
+
+			    March 3, 1998
+
+			       Bela Ban
+			   4114 Upson Hall
+			  Cornell University
+			   Ithaca, NY 14853
+			  bba@cs.cornell.edu
+
+
+JavaGroups is a set of Java classes cooperating to provide group
+communication services in Java. Group communication allows one sender
+to send messages to a number of receivers. All responses may be
+processed by the sender, or just the first response, or any
+combination thereof.
+
+Group communication is important the following situations:
+
+ - A service has to be replicated for availability. As long as at
+   least one of the servers remains operational, the service itself
+   remains operational
+
+ - Service requests have to be balanced between a set of servers
+
+ - A large number of objects have to be managed as one entity (e.g. a
+   management domain)
+
+ - Notification service / push technology: receivers subscribe to a
+   channel, senders send data to the channels, channels distribute
+   data to all receivers subscribed to the channel (see iBus, CastaNet
+   etc.).  Used for example for video distribution, videoconferencing
+	
+	
+
+
+JavaGroups deliberately models a rather low-level message-oriented
+middleware (MOM) model. The reason is that we don't want to impose a
+one-size-fits-all model on the programmer, who usually will want to
+extend the model in various (previously unconceived) ways anyway.
+
+Providing low level Java classes allows the programmer to
+extend/replace classes at will, as the granularity of the system is
+finer.
+
+JavaGroups can also be used for the construction of higher level
+toolkits/frameworks. Such frameworks should provide a certain
+transparency, without, however, preventing extensions to be made. The
+principle of creating partly 'opened-up' black boxes is called Open
+Implementation (OI, http://www.parc.xerox.com/spl/projects/oi/) and
+will be applied both to JavaGroups and to a further higher level
+toolkit.
+
+We envisage using JavaGroups to enhance Java's RMI to include group
+communication. Such a framework would enable the sending of an RMI
+message to a set of objects rather than just a single one. The design
+of such a frameowork has been described in
+http://www.cs.cornell.edu/home/bba/javagroups.html
+
+

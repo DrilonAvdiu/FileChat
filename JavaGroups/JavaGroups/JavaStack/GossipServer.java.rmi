@@ -1,0 +1,187 @@
+package JavaGroups.JavaStack;
+
+import java.net.*;
+import java.util.*;
+import java.rmi.*;
+import java.rmi.registry.*;
+import java.rmi.server.*;
+import JavaGroups.*;
+
+
+
+/**
+ * Server that keeps track of (group) members. A member registers its address (oid) with the 
+ * Gossip server periodically. Every n seconds, if the registration is not renewed, old entries
+ * are purged in order to avoid stale references to members that have crashed.<p>
+ * The GossipServer is mainly used to simulate IP multicast. It allows to find the initial
+ * members of a group where IP multicasting is disabled.
+ */
+public class GossipServer extends UnicastRemoteObject implements Gossip, Runnable {
+
+    class Entry {
+	Object         addr=null;
+	long           timestamp=0;
+
+	public Entry(Object addr) {
+	    this.addr=addr; timestamp=System.currentTimeMillis();
+	}
+    }
+
+
+    private final int       TIMEOUT=5000;  // After this timeout, stale entries are removed 
+    private Hashtable       entries=new Hashtable();  // groupname - list of Entry's
+
+    
+    private int PurgeOldEntries() {
+	long   current_time;
+	Vector val;
+	Entry  entry;
+	int    num=0;
+
+	synchronized(entries) {
+	    current_time=System.currentTimeMillis();
+	    for(Enumeration e=entries.keys(); e.hasMoreElements();) {
+		val=(Vector)entries.get(e.nextElement());
+		for(int i=0; i < val.size(); i++) {
+		    entry=(Entry)val.elementAt(i);
+		    if(current_time - entry.timestamp >= TIMEOUT) {
+			val.removeElement(entry); // Is the iteration afterwards guaranteed ?
+			num++;
+		    }
+		}
+	    }
+	    return num;
+	}
+    }
+
+
+
+    public GossipServer() throws RemoteException {
+	super();
+	new Thread(this, "GossipServerThread").start();
+    }
+
+
+
+    private void AddEntry(Vector v, Object my_addr) {
+	Entry entry, e=new Entry(my_addr);
+	
+	for(int i=0; i < v.size(); i++) {
+	    entry=(Entry)v.elementAt(i);
+	    if(entry.addr != null && entry.addr.equals(my_addr)) {
+		entry.timestamp=System.currentTimeMillis();
+		return;
+	    }	    
+	}
+	v.addElement(e);
+    }
+
+
+    /**
+     * Registers an address with Gossip. If the address is already present, it will be 
+     * overwritten by new entry. This prevents the server from removing stale entries (older
+     * than 4 seconds).
+     */
+    public synchronized void Register(String groupname, Object my_addr) throws RemoteException {
+	Vector tmp;
+	synchronized(entries) {
+	    tmp=(Vector)entries.get(groupname);
+	    if(tmp == null) {
+		tmp=new Vector();
+		AddEntry(tmp, my_addr);
+		entries.put(groupname, tmp);
+	    }
+	    else
+		AddEntry(tmp, my_addr);
+	}
+    }
+
+
+
+    public synchronized Vector Get(String groupname) throws RemoteException {
+	Vector retval=new Vector(), tmp;
+	synchronized(entries) {
+	    tmp=(Vector)entries.get(groupname);
+	    if(tmp == null)
+		return retval;
+	    for(int i=0; i < tmp.size(); i++)
+		retval.addElement(((Entry)tmp.elementAt(i)).addr);
+	    return retval;
+	}
+    }
+
+
+    /**
+     * Thread periodically (every TIMEOUT milliseconds) removes entries older than TIMEOUT
+     * milliseconds.
+     */
+    public void run() {
+	int num;
+	while(true) {
+	    try {
+		Thread.currentThread().sleep(TIMEOUT);		
+		num=PurgeOldEntries();
+	    }
+	    catch(Exception e) {
+		System.err.println(e);
+	    }
+	}
+    }
+
+
+    
+
+    /** Start up as Gossip daemon */
+    public static void main(String[] args) {
+	String           arg, next_arg, reg_loc;
+	int              port=12001;
+	GossipServer     srv=null; 
+	final String     reg_name="GOSSIP_SERVER";
+	Registry         registry=null;
+
+	for(int i=0; i < args.length; i++) {
+	    arg=args[i];
+	    if(arg.equals("-help")) {
+		System.out.println("GossipServer [-port <registry port> ]");
+		return;
+	    }
+	    else if(arg.equals("-port")) {
+		port=new Integer(args[++i]).intValue();
+		continue;
+	    }
+	}
+	try {
+	    System.setSecurityManager(new RMISecurityManager());
+	    System.out.print("Creating RMI registry on port " + port + ": ");
+
+	    try {
+		registry=LocateRegistry.createRegistry(port);
+	    }
+	    catch(ExportException export_ex) {
+		System.err.print("FAILED; registry already exists on port " + port +
+				   ".\nRetrieving exiting registry: ");
+		try {
+		    registry=LocateRegistry.getRegistry(port);
+		}
+		catch(ExportException e) {
+		    System.err.println("FAILED to retrieve existing registry at port " + port);
+		    System.exit(1);
+		}
+	    }
+
+	    System.out.println("OK");
+	    System.out.print("Creating instance of GossipServer: ");
+	    srv=new GossipServer();
+	    System.out.println("OK");	    
+	    reg_loc="//:" + port + "/" + reg_name;
+	    System.out.print("Binding the instance to naming service at " + reg_loc + ": ");
+	    Naming.rebind(reg_loc, srv);
+	    System.out.println("OK");
+	    System.out.println("Gossip server was created and bound to registry!");
+	}
+	catch(Exception e) {
+	    System.err.println(e);
+	}
+    }
+    
+}

@@ -1,0 +1,16 @@
+
+
+			      Todo List
+			      ---------
+
+
+- Configurator: check whether bottommost protocol layer implements
+  LowLevelCommunication. Throw an exception if not. (Performed at the
+  end of SetupProtocolStack)
+
+- All methods in interface LowLevelCommunication except
+  GetLocalAddress can be removed !
+
+- Make Registry NOT static; there can be more than one channel in a VM !
+
+

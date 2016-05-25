@@ -1,0 +1,55 @@
+README file for JavaGroupsVC version 0.5 beta
+Author: Ng, Hooi Ming (hooiming@cs.cornell.edu)
+
+JavaGroupsVC is designed to be a video conferencing application for JavaGroups, 
+a reliable groups communication toolkit developed at Cornell University.
+It is an open source project. 
+
+Installation
+
+   JavaGroupsVC is an extension package for JavaGroups. 
+   This distribution comes with JavaGroups version 0.6.3.
+   If you want to get the latest version of JavaGroups, please
+   go to Bela Ban's web page :http://simon.cs.cornell.edu/Info/People/bba/
+   for download and installation instruction.
+
+   After you unzip JavaGroupsVC_v0.5.zip, you should see this README file, 
+   JavaGroupsVC.java and the folder "JavaGroups".
+   Everything is the folder "JavaGroups" is the same as the standard binary distribution
+   of JavaGroups version 0.6.3. Except for the folder "VideoConference".
+   
+
+   For Example:
+   If you JavaGroups root directory is at
+   
+   c:\JavaGroups\
+   
+   Then, the extension package is
+   
+   c:\JavaGroups\VideoConference
+   
+   
+   If you want to use the latest version of JavaGroups, just replace everything in 
+   directory "JavaGroups" with the new version ( but save folder "VideoConference").
+
+   
+   Before you can compile JavaGroupsVC, you need JMF1.1 (Java Media Framework).
+   and JavaGroupsVC needs JDK1.2 ( it uses Swing ). 
+  
+   For instruction about the installation of JDK1.2 and JMF1.1,
+   please consult JavaSoft's web site: http://www.javasoft.com
+   
+Compilation and Execution 
+
+	You can compile JavaGroupsVC with the command
+	
+		c:\javac JavaGroupsVC.java
+		
+	And then you can run JavaGroupsVC with the command
+	
+		c:\java JavaGroupsVC
+		
+		
+   
+   
+   

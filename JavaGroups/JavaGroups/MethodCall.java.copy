@@ -1,0 +1,248 @@
+package JavaGroups.channel;
+
+import java.io.*;
+import java.util.*;
+import java.lang.reflect.*;
+
+public class MethodCall implements Serializable {
+    protected String method_name=null;
+    protected Vector formal_args=new Vector();
+    protected Vector args=new Vector();
+
+
+    public MethodCall() {
+	
+    }
+    
+    public MethodCall(String name) {
+	method_name=name;
+    }
+
+    public MethodCall(String name, Object arg1) {
+	this(name);
+	AddArg(arg1);
+    }
+
+    public MethodCall(String name, Object arg1, Object arg2) {
+	this(name, arg1);
+	AddArg(arg2);
+    }
+
+    public MethodCall(String name, Object arg1, Object arg2, Object arg3) {
+	this(name, arg1, arg2);
+	AddArg(arg3);
+    }
+
+    public MethodCall(String name, Vector args) {
+	method_name=name;
+	if(args != null)
+	    for(int i=0; i < args.size(); i++)
+		AddArg(args.elementAt(i));
+    }
+
+
+    public String GetName()         {return method_name;}
+    public void   SetName(String n) {method_name=n;}
+
+
+
+    public void AddArg(Object arg) {
+	formal_args.addElement(arg.getClass());
+	args.addElement(arg);
+    }
+
+    public void AddArg(byte b) {
+	// formal_args.addElement(Byte.TYPE);
+	Byte obj=new Byte(b);
+	args.addElement(obj);
+	formal_args.addElement(obj.getClass());
+    }
+
+    public void AddArg(char c) {
+	//formal_args.addElement(Character.TYPE);
+	Character obj=new Character(c);
+	args.addElement(obj);
+	formal_args.addElement(obj.getClass());
+    }
+
+    public void AddArg(boolean b) {
+	// formal_args.addElement(Boolean.TYPE);
+	Boolean obj=new Boolean(b);
+	args.addElement(obj);
+	formal_args.addElement(obj.getClass());
+    }
+
+    public void AddArg(int i) {
+	// formal_args.addElement(Integer.TYPE);
+	Integer obj=new Integer(i);
+	args.addElement(obj);
+	formal_args.addElement(obj.getClass());
+    }
+
+    public void AddArg(long l) {
+	//formal_args.addElement(Long.TYPE);
+	Long obj=new Long(l);
+	args.addElement(obj);
+	formal_args.addElement(obj.getClass());
+    }
+
+
+    
+    Method FindMethod(Class target_class, String method_name, Vector formal_args) throws Exception {
+	Method    retval=null, tmp;
+	Method[]  methods=target_class.getMethods();
+	Vector    matching_methods=new Vector();  // contains all possible matches
+	int       num_args=formal_args.size();
+	Class     parm_cl;
+	Class[]   parm_types;
+	
+	/* 
+	   1. Match by name and number of parameters 
+	 */
+	for(int i=0; i < methods.length; i++) {
+	    tmp=methods[i];
+	    if(tmp.getName().equals(method_name) && tmp.getParameterTypes().length == num_args) {
+		matching_methods.addElement(tmp);
+		continue;
+	    }
+	}
+
+	if(matching_methods.size() == 1)
+	    return (Method)matching_methods.elementAt(0);
+	else if(matching_methods.size() < 1)
+	    throw new NoSuchMethodException();
+	    
+	
+
+	/* 
+	   2. If this is not enough (more than 1 method matching), match formal parameters with
+	   actual arguments. Discard methods whose arguments cannot be cast to the formal parameters 
+	*/
+
+	for(int i=0; i < matching_methods.size(); i++) {
+	    tmp=(Method)matching_methods.elementAt(i);
+	    parm_types=tmp.getParameterTypes();
+	    for(int j=0; j < formal_args.size(); j++) {
+		parm_cl=(Class)parm_types[j];
+		if(arg_cl.isInstance(
+	    }
+	}
+	
+	
+
+	return retval;
+    }
+
+
+    public Object Invoke(Object target) {
+	Class   cl=target.getClass();
+	Method  meth;
+	Object  retval=null;
+	Class   class_args[];
+	Object  obj_args[];
+	
+	if(method_name == null) {
+	    System.out.println("Method name is not provided");
+	    return null;
+	}
+	try {
+
+	    // class_args=new Class[formal_args.size()];
+	    // for(int i=0; i < formal_args.size(); i++)
+	    //	 class_args[i]=(Class)formal_args.elementAt(i);
+	    //	    meth=cl.getMethod(method_name, class_args);
+
+	    meth=FindMethod(cl, method_name, formal_args);
+
+	    obj_args=new Object[args.size()];
+	    for(int i=0; i < args.size(); i++)
+		obj_args[i]=args.elementAt(i);
+
+	    retval=meth.invoke(target, obj_args);
+	    return retval;
+	}
+	catch(InvocationTargetException inv_ex) {
+	    retval=inv_ex.getTargetException();
+	}
+	catch(NoSuchMethodException no) {
+	    System.out.println("Found no method called " + method_name + " in class " +
+			       cl.getName() + " with " + formal_args + " formal parameters");
+	    return null;
+	}
+	catch(Exception e) {
+	    System.err.println(e);
+	}
+
+	return retval;
+    }
+
+
+
+    public String toString() {
+	StringBuffer ret=new StringBuffer();
+	ret.append("MethodCall (name=" + method_name);
+	ret.append(", number of args=" + args.size() + ")");
+	ret.append("\nArgs:");
+	for(int i=0; i < args.size(); i++) {
+	    ret.append("\n[" + args.elementAt(i) + " (" + 
+		       ((Class)formal_args.elementAt(i)).getName() + ")]");
+	}
+	return ret.toString();
+    }
+
+
+    public byte[] GetBytes() throws Exception {
+	ByteArrayOutputStream out_stream=new ByteArrayOutputStream();
+	ObjectOutputStream    out=new ObjectOutputStream(out_stream);
+	out.writeObject(this);
+	out.flush();    // needed ?
+	return out_stream.toByteArray();
+    }
+
+    public static Object CreateObjectFromByteBuffer(byte[] buffer) throws Exception {
+	Object               retval=null;
+	ByteArrayInputStream in_stream=new ByteArrayInputStream(buffer);
+	ObjectInputStream    in=new ObjectInputStream(in_stream);	
+	retval=in.readObject();
+	if(retval == null)
+	    return null;
+	return retval;
+    }
+
+
+
+//     public void writeExternal(ObjectOutput out) throws IOException {
+// 	System.out.println("writeExternal");
+// 	out.writeObject(method_name);
+// 	out.writeObject(formal_args);
+// 	out.writeObject(args);
+//     }
+
+
+//     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+// 	method_name=(String)in.readObject();
+// 	formal_args=(Vector)in.readObject();
+// 	args=(Vector)in.readObject();
+
+//     }
+
+
+    private void writeObject(java.io.ObjectOutputStream out) throws IOException {
+	out.writeObject(method_name);
+	out.writeObject(formal_args);
+	out.writeObject(args);
+    }
+    
+    private void readObject(java.io.ObjectInputStream in)
+	throws IOException, ClassNotFoundException {
+	method_name=(String)in.readObject();
+	formal_args=(Vector)in.readObject();
+	args=(Vector)in.readObject();
+    }
+ 
+
+
+}
+
+
+

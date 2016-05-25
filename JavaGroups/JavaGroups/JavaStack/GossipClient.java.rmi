@@ -1,0 +1,198 @@
+package JavaGroups.JavaStack;
+
+
+import java.net.*;
+import java.rmi.*;
+import java.util.*;
+
+
+public class GossipClient implements Runnable {
+    private Thread       updater=null;
+    private Oid          my_addr=null;
+    private Gossip       srv=null;
+    private String       host=null;
+    private int          port=12001;
+    private String       name="GOSSIP_SERVER";
+    private String       remote_addr;
+    private String       groupname=null;
+    private final long   TIMEOUT=4000;
+
+
+
+    private Gossip GetServer() throws Exception {
+	Gossip retval=null;
+	remote_addr="//" + host + ":" + port + "/" + name;
+	System.out.println("Looking up remote Gossip server (" + remote_addr + "):");
+	retval=(Gossip)Naming.lookup(remote_addr);
+	System.out.println("Found.");
+	return retval;
+    }
+
+
+
+
+
+
+
+    public GossipClient(String groupname, String host, int port) {
+	this.groupname=groupname;
+	this.host=host;
+	this.port=port;	
+	if(this.host == null) {
+	    try {
+		this.host=InetAddress.getLocalHost().getHostName();
+	    }
+	    catch(Exception e) {
+		System.err.println(e);
+		this.host=null;
+	    }
+	}	
+    }
+
+
+    public Vector Get(String groupname) {
+	Vector retval=new Vector();
+
+	try {
+	    if(srv == null)
+		srv=GetServer();
+	    if(srv == null)
+		return retval;
+	    else
+		return srv.Get(groupname);
+	}
+	catch(NotBoundException nb) {
+	    System.err.println("GossipClient.Get(): gossip server could not be " + 
+			       "retrieved from registry\nPlease make sure it is running !");
+	    srv=null;
+	    return retval;
+	}
+	catch(RemoteException e) {
+	    System.err.println("GossipClient.Get(): gossip server could not be " +
+			       " reached !\nPlease make sure it is running !");
+	    srv=null;
+	    return retval;
+	}
+	catch(Exception e) {
+	    System.err.println(e);
+	    return retval;
+	} 
+    }
+
+
+    public void Start() {
+	if(updater == null) {
+	    updater=new Thread(this);
+	    updater.start();
+	}
+    }
+
+
+
+    public void Stop() {
+	if(updater != null) {
+	    updater.stop();
+	    updater=null;
+	}
+    }
+
+
+    public void SetAddress(Oid addr) {
+	my_addr=addr;
+	try {
+	    my_addr=addr;
+	    if(srv == null)
+		srv=GetServer();
+	    srv.Register(groupname, addr);
+	}
+	catch(NotBoundException nb) {
+	    System.err.println("GossipClient.SetAddress(): gossip server could not be retrieved " +
+			       "from registry\nPlease make sure it is running !");
+	    srv=null;
+	    return;
+	}
+	catch(RemoteException e) {
+	    System.err.println("GossipClient.SetAddress(): gossip server could not be reached !" +
+			       "\nPlease make sure it is running !");
+	    srv=null;
+	    return;
+	}
+	catch(Exception ex) {
+	    System.err.println("GossipClient.SetAddress(): " + ex);
+	    srv=null;
+	    return;
+	}
+    }
+
+
+    
+    public void run() {
+	while(true) {	   
+	    try {
+		Thread.currentThread().sleep(TIMEOUT);
+
+		if(my_addr == null)
+		    continue;
+
+		if(srv == null)
+		    srv=GetServer();
+
+		// System.out.println("Registering " + my_addr);
+		srv.Register(groupname, my_addr);
+	    }
+	    catch(NotBoundException nb) {
+		System.err.println("GossipClient.SetAddress(): gossip server could not be " + 
+				   "retrieved from registry\nPlease make sure it is running !");
+		srv=null;
+	    }
+	    catch(RemoteException e) {
+		System.err.println("GossipClient.SetAddress(): gossip server could not be " +
+				   " reached !\nPlease make sure it is running !");
+		srv=null;
+	    }
+	    catch(Exception ex) {
+		System.err.println("GossipClient.SetAddress(): " + ex);
+	    }
+	}
+	
+    }
+
+
+
+
+
+
+    public static void main(String args[]) {
+	String         host=null;
+	int            port=12001;
+	String         arg, next_arg;
+	GossipClient   client=null;
+
+
+	for(int i=0; i < args.length; i++) {
+	    arg=args[i];
+	    if(arg.equals("-help")) {
+		System.out.println("GossipClient [-host <hostname>] [-port <registry port> ]");
+		return;
+	    }
+	    else if(arg.equals("-port")) {
+		port=new Integer(args[++i]).intValue();
+		continue;
+	    }
+	    else if(arg.equals("-host")) {
+		host=args[++i];
+		continue;
+	    }
+	}
+
+
+	Oid my_addr=new Oid(new InternetAddress((int)System.currentTimeMillis()%10000), 
+			    "DemoGroup");
+
+	client=new GossipClient("DemoGroup", host, port);
+	client.SetAddress(my_addr);
+	client.Start();	
+    }
+}
+
+

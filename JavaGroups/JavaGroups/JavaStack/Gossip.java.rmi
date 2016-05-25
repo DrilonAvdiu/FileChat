@@ -1,0 +1,22 @@
+package JavaGroups.JavaStack;
+
+
+import java.util.*;
+
+
+
+
+public interface Gossip extends java.rmi.Remote {
+
+
+    /**
+     * Registers an address with Gossip. If the address is already present, it will be 
+     * overwritten by new entry. This prevents the server from removing stale entries (older
+     * than 4 seconds).
+     */
+    public void Register(String groupname, Object my_addr) throws java.rmi.RemoteException;
+
+
+    /** Return a list of Objectss registered for groupname */
+    public Vector Get(String groupname) throws java.rmi.RemoteException;   
+}

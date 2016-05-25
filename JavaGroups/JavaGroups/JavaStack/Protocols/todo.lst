@@ -1,0 +1,11 @@
+
+
+			      Todo List
+			      ---------
+
+- Discard messages destined for a different channel (UdpMcastReceiverThread)
+
+- Choose random IP multicast address (e.g. hash value of channel name)
+
+- Correct TUNNEL: remove sleep() with gossiping
+
