@@ -22,10 +22,9 @@ public class FileReaderThread implements Runnable {
 	boolean debug;
 	boolean stop;
 	boolean fileNameSent = false;
-	JList<String> lista;
 	TextManager textManager;
 	public FileReaderThread(boolean debug, Object selfAddress, Channel channel, FileInputStream fileInputStream,
-			String fileName, JList<String> lista, int FilePacketDelay, int FilePacketSize,TextManager textManager) {
+			String fileName, int FilePacketDelay, int FilePacketSize,TextManager textManager) {
 		this.debug = debug;
 		this.fileName = fileName;
 		this.selfAddress = selfAddress;
@@ -33,7 +32,6 @@ public class FileReaderThread implements Runnable {
 		this.fileInputStream = fileInputStream;
 		this.FilePacketDelay = FilePacketDelay;
 		this.FilePacketSize = FilePacketSize;
-		this.lista = lista;
 		this.textManager=textManager;
 		t = new Thread(this, "FileReaderThread");
 		t.start();

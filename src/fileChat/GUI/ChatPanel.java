@@ -2,6 +2,7 @@ package fileChat.GUI;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+import javax.swing.text.DefaultCaret;
 
 import fileChat.DataManager.TextManager;
 public class ChatPanel extends JPanel implements ActionListener
@@ -21,6 +22,8 @@ public class ChatPanel extends JPanel implements ActionListener
 		this.textManager=textManager;		//Setup text field and text area
 		textField = new JTextField(40);
 		textArea = new JTextArea(10, 40);
+		DefaultCaret caret = (DefaultCaret)textArea.getCaret();
+		caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
 		textArea.setEditable(false);
 		textArea.setLineWrap(true);
 		textArea.setWrapStyleWord(true);

@@ -55,7 +55,7 @@ public class FileManager extends MediaManager {
 	}
 
 	public void startBroadcastMedia() {
-		fileReaderThread = new FileReaderThread(debug, selfAddress, channel, fileInputStream, fileName, lista,
+		fileReaderThread = new FileReaderThread(debug, selfAddress, channel, fileInputStream, fileName,
 				filePacketDelay, filePacketSize, textManager);
 	}
 
@@ -85,7 +85,6 @@ public class FileManager extends MediaManager {
 			} else if (msg instanceof EndFileMsg) {
 				fileOutputStream.write(msg.GetBuffer());
 				fileOutputStream.close();
-				JList<String> lista = guiManager.getFrameOfAcceptedFiles().getFileList();
 				int len = lista.getModel().getSize();
 				boolean exists = false;
 				for (int i = 0; i < len; i++) {
